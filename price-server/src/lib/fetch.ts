@@ -4,6 +4,12 @@ import { Agent as HttpsAgent } from 'https'
 import nodeFetch, { RequestInit, Response } from 'node-fetch'
 export * from 'node-fetch'
 
+interface TimeoutRequestInit extends RequestInit {
+  timeout?: number
+}
+
+const defaultTimeoutMs = parseTimeout(process.env.PRICE_SERVER_FETCH_TIMEOUT_MS, 10000)
+
 const httpAgent = new HttpAgent({
   keepAlive: true,
 })
@@ -22,8 +28,28 @@ const options = {
   },
 }
 
-export default function fetch(url: string, init?: RequestInit): Promise<Response> {
-  return nodeFetch(url, { ...init, ...options })
+export default function fetch(url: string, init?: TimeoutRequestInit): Promise<Response> {
+  const { timeout, signal, ...fetchInit } = init || {}
+  const timeoutMs = parseTimeout(timeout, defaultTimeoutMs)
+
+  if (!timeoutMs) {
+    return nodeFetch(url, { ...fetchInit, ...options, signal })
+  }
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort()
+    } else {
+      signal.addEventListener('abort', () => controller.abort(), { once: true })
+    }
+  }
+
+  return nodeFetch(url, { ...fetchInit, ...options, signal: controller.signal }).finally(() =>
+    clearTimeout(timer),
+  )
 }
 
 export function toFormData(object: Record<string, unknown>): FormData {
@@ -39,4 +65,14 @@ export function toQueryString(object: Record<string, unknown>): string {
     .filter(([, value]) => value !== undefined && value !== null)
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
     .join('&')
+}
+
+function parseTimeout(value: unknown, fallback: number): number {
+  const parsed = Number(value)
+
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return fallback
+  }
+
+  return parsed
 }
