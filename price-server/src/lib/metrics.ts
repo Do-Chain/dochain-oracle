@@ -1,6 +1,6 @@
-import { Counter } from '@opentelemetry/api-metrics'
+import { Counter, Meter } from '@opentelemetry/api'
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus'
-import { Meter, MeterProvider } from '@opentelemetry/metrics'
+import { MeterProvider } from '@opentelemetry/sdk-metrics'
 import * as config from 'config'
 
 let meterProvider = new MeterProvider()
@@ -14,8 +14,7 @@ export async function setupMetricsServer() {
   })
 
   meterProvider = new MeterProvider({
-    exporter,
-    interval: 3000,
+    readers: [exporter],
   })
 
   await exporter.startServer()
@@ -34,32 +33,22 @@ function setupMetrics() {
     description: 'Count all incoming requests',
   })
 
-  meter.createUpDownSumObserver(
-    'dochain_oracle_up',
-    {
+  meter
+    .createObservableGauge('dochain_oracle_up', {
       description: '1 if price-server quoter is up, or 0 if failed',
-    },
-    async (observerResult) => {
+    })
+    .addCallback((observerResult) => {
       for (const [name, isAlive] of quoterAlive) {
         observerResult.observe(isAlive ? 1 : 0, { oracle_source: name })
       }
-    },
-  )
+    })
 }
-
-const boundInstruments = new Map()
 
 export const countAllRequests = () => {
   setupMetrics()
 
   return (req, res, next) => {
-    if (!boundInstruments.has(req.path)) {
-      const labels = { route: req.path }
-      const boundCounter = requestCount.bind(labels)
-      boundInstruments.set(req.path, boundCounter)
-    }
-
-    boundInstruments.get(req.path).add(1)
+    requestCount.add(1, { route: req.path })
     next()
   }
 }

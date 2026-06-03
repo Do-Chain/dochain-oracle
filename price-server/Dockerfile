@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY package*.json gate-api* ./
 
-RUN npm i --production
+RUN npm ci --omit=dev --ignore-scripts
 
 COPY tsconfig.json ./
 COPY src ./src

@@ -14,7 +14,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm i --production
+RUN npm ci --omit=dev --ignore-scripts
 
 COPY tsconfig.json ./
 COPY src ./src

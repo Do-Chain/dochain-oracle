@@ -10,7 +10,6 @@ const httpAgent = new HttpAgent({
 
 const httpsAgent = new HttpsAgent({
   keepAlive: true,
-  rejectUnauthorized: false,
 })
 
 const options = {
@@ -36,7 +35,8 @@ export function toFormData(object: Record<string, unknown>): FormData {
 }
 
 export function toQueryString(object: Record<string, unknown>): string {
-  return Object.keys(object)
-    .map((key) => `${key}=${object[key]}`)
+  return Object.entries(object)
+    .filter(([, value]) => value !== undefined && value !== null)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
     .join('&')
 }

@@ -17,10 +17,28 @@ jobs:
     container: "node:18"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Audit
+      - name: Install root dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install feeder dependencies
+        run: cd feeder; npm ci --ignore-scripts
+
+      - name: Install price-server dependencies
+        run: cd price-server; npm ci --ignore-scripts
+
+      - name: Audit root dependencies
+        run: npm audit
+
+      - name: Audit feeder dependencies
+        run: cd feeder; npm audit
+
+      - name: Audit price-server dependencies
         run: cd price-server; npm audit
+
+      - name: Run tests
+        run: npm test
 
   delivery:
     runs-on: ubuntu-latest
@@ -32,13 +50,13 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
 
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -53,7 +71,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build, tag, and push docker image for price-server to GHCR
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           context: ./price-server
           push: true
@@ -64,7 +82,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
     
       - name: Build, tag, and push docker image for feeder to GHCR
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           context: ./feeder
           push: true
