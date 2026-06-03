@@ -11,7 +11,7 @@ class FiatProvider extends Provider {
   }
 
   public async initialize(): Promise<void> {
-    const { fallbackPriority } = config.fiatProvider
+    const fallbackPriority = (config.fiatProvider as any)?.fallbackPriority || []
 
     // sort by fallback priority
     for (const name of fallbackPriority) {

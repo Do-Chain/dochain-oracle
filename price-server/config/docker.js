@@ -3,6 +3,9 @@ const FIAT_SYMBOLS = splitEnv('FIAT_SYMBOLS')
 
 module.exports = {
   port: parseInt(process.env.PORT) || 8532,
+  host: process.env.HOST || '127.0.0.1',
+  metricsPort: parseInt(process.env.METRICS_PORT) || 0,
+  report: process.env.REPORT === 'true',
   fixedPrices: process.env.DO_PRICE ? { DO: process.env.DO_PRICE } : {},
   sentry: process.env.SENTRY || '', // sentry dsn (https://sentry.io/ - error reporting service)
   slack: {
@@ -11,6 +14,7 @@ module.exports = {
     url: process.env.SLACK_URL || '',
   },
   cryptoProvider: {
+    fallbackPriority: splitEnv('CRYPTO_PROVIDER_FALLBACK_PRIORITY'),
     adjustTvwap: {
       symbols: splitEnv('CRYPTO_PROVIDER_ADJUST_TVWAP_SYMBOLS'),
     },
@@ -34,6 +38,7 @@ module.exports = {
     },
   },
   fiatProvider: {
+    fallbackPriority: splitEnv('FIAT_PROVIDER_FALLBACK_PRIORITY'),
     currencylayer: process.env.FIAT_PROVIDER_CURRENCY_LAYER_INTERVAL && {
       symbols: FIAT_SYMBOLS,
       interval: parseInt(process.env.FIAT_PROVIDER_CURRENCY_LAYER_INTERVAL) || 60 * 1000,

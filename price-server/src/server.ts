@@ -23,6 +23,7 @@ function configuredFixedPrices(): Array<{ denom: string; price: string }> {
 
 export async function createServer(): Promise<http.Server> {
   const app = polka({})
+  const host = (config as any).host || '127.0.0.1'
 
   app.use(countAllRequests())
 
@@ -57,8 +58,8 @@ export async function createServer(): Promise<http.Server> {
 
   const server = http.createServer(app.handler)
 
-  server.listen(config.port, () => {
-    logger.info(`price server is listening on port ${config.port}`)
+  server.listen(config.port, host, () => {
+    logger.info(`price server is listening on ${host}:${config.port}`)
   })
 
   return server
