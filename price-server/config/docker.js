@@ -1,5 +1,15 @@
-const splitEnv = (name) => (process.env[name] ? process.env[name].split(',').filter(Boolean) : [])
+const splitEnv = (name, fallback = []) => (process.env[name] ? process.env[name].split(',').filter(Boolean) : fallback)
+const parseIntEnv = (name, fallback) => {
+  const parsed = parseInt(process.env[name] || '', 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
 const FIAT_SYMBOLS = splitEnv('FIAT_SYMBOLS')
+const CRYPTO_FALLBACK_PRIORITY = splitEnv('CRYPTO_PROVIDER_FALLBACK_PRIORITY')
+const COINGECKO_SYMBOLS = splitEnv('CRYPTO_PROVIDER_COINGECKO_SYMBOLS')
+
+if (COINGECKO_SYMBOLS.length && !CRYPTO_FALLBACK_PRIORITY.includes('coinGecko')) {
+  CRYPTO_FALLBACK_PRIORITY.push('coinGecko')
+}
 
 module.exports = {
   port: parseInt(process.env.PORT) || 8532,
@@ -17,10 +27,15 @@ module.exports = {
     url: process.env.SLACK_URL || '',
   },
   cryptoProvider: {
-    fallbackPriority: splitEnv('CRYPTO_PROVIDER_FALLBACK_PRIORITY'),
+    fallbackPriority: CRYPTO_FALLBACK_PRIORITY,
     minValidSources: parseInt(process.env.CRYPTO_PROVIDER_MIN_VALID_SOURCES || '1', 10),
     adjustTvwap: {
       symbols: splitEnv('CRYPTO_PROVIDER_ADJUST_TVWAP_SYMBOLS'),
+    },
+    coinGecko: COINGECKO_SYMBOLS.length && {
+      symbols: COINGECKO_SYMBOLS,
+      interval: parseIntEnv('CRYPTO_PROVIDER_COINGECKO_INTERVAL', 60 * 1000),
+      timeout: parseIntEnv('CRYPTO_PROVIDER_COINGECKO_TIMEOUT', 10000),
     },
     upbit: process.env.CRYPTO_PROVIDER_UPBIT_SYMBOLS && {
       symbols: process.env.CRYPTO_PROVIDER_UPBIT_SYMBOLS.split(',') || [],
