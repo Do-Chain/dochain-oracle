@@ -69,6 +69,10 @@ function decrypt(encryptedText: string, password: string): string {
     return decryptV2(encryptedText, password)
   }
 
+  if (process.env.ORACLE_ALLOW_LEGACY_KEYSTORE !== 'true') {
+    throw new Error('Legacy oracle keystore ciphertext is disabled')
+  }
+
   return decryptLegacy(encryptedText, password)
 }
 

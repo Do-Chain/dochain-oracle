@@ -6,7 +6,10 @@ module.exports = {
   host: process.env.HOST || '127.0.0.1',
   metricsPort: parseInt(process.env.METRICS_PORT) || 0,
   report: process.env.REPORT === 'true',
-  fixedPrices: process.env.DO_PRICE ? { DO: process.env.DO_PRICE } : {},
+  fixedPrices:
+    process.env.ORACLE_ALLOW_FIXED_PRICES === 'true' && process.env.DO_PRICE
+      ? { DO: process.env.DO_PRICE }
+      : {},
   sentry: process.env.SENTRY || '', // sentry dsn (https://sentry.io/ - error reporting service)
   slack: {
     // for incident alarm (e.g. exchange shutdown)
@@ -15,6 +18,7 @@ module.exports = {
   },
   cryptoProvider: {
     fallbackPriority: splitEnv('CRYPTO_PROVIDER_FALLBACK_PRIORITY'),
+    minValidSources: parseInt(process.env.CRYPTO_PROVIDER_MIN_VALID_SOURCES || '1', 10),
     adjustTvwap: {
       symbols: splitEnv('CRYPTO_PROVIDER_ADJUST_TVWAP_SYMBOLS'),
     },
@@ -39,6 +43,7 @@ module.exports = {
   },
   fiatProvider: {
     fallbackPriority: splitEnv('FIAT_PROVIDER_FALLBACK_PRIORITY'),
+    minValidSources: parseInt(process.env.FIAT_PROVIDER_MIN_VALID_SOURCES || '1', 10),
     currencylayer: process.env.FIAT_PROVIDER_CURRENCY_LAYER_INTERVAL && {
       symbols: FIAT_SYMBOLS,
       interval: parseInt(process.env.FIAT_PROVIDER_CURRENCY_LAYER_INTERVAL) || 60 * 1000,

@@ -4,6 +4,7 @@ import * as logger from 'lib/logger'
 import { CurrencyLayer, AlphaVantage, Fixer, ExchangeRate, Fer, Frankfurter, Fastforex, IMF } from './quoter'
 import BigNumber from 'bignumber.js'
 import { getBaseCurrency } from 'lib/currency'
+import { average, hasOutliers } from 'lib/statistics'
 
 class FiatProvider extends Provider {
   constructor(options: ProviderOptions) {
@@ -87,14 +88,18 @@ class FiatProvider extends Provider {
     for (const symbol of this.symbols) {
       delete this.priceBySymbol[symbol]
 
-      // get price by fallback priority
-      for (const quoter of this.quoters) {
-        const price = quoter.getPrice(symbol)
-
-        if (price) {
-          this.priceBySymbol[symbol] = price
-          break
-        }
+      const prices = this.collectPrice(symbol)
+      if (prices.length < this.minimumSourceCount()) {
+        logger.error(
+          `Skipping ${symbol}: ${prices.length} valid fiat source(s), minimum ${this.minimumSourceCount()} required`
+        )
+      } else if (hasOutliers(prices)) {
+        logger.error(
+          `Skipping ${symbol}: fiat source prices differ too much`,
+          prices.map((price) => price.toString())
+        )
+      } else {
+        this.priceBySymbol[symbol] = average(prices)
       }
     }
 

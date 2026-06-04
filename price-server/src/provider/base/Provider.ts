@@ -3,7 +3,7 @@ import { uniq, concat } from 'lodash'
 import { format, addMinutes, isSameMinute, isSameDay } from 'date-fns'
 import * as config from 'config'
 import { createReporter } from 'lib/reporter'
-import { average, tvwap } from 'lib/statistics'
+import { average, hasOutliers, tvwap } from 'lib/statistics'
 import * as logger from 'lib/logger'
 import { PriceBySymbol, Trades } from './types'
 import Quoter from './Quoter'
@@ -15,6 +15,7 @@ export interface ProviderOptions {
     symbols: Array<string> // symbol list that adjust price using tvwap
   }
   fallbackPriority: Array<string>
+  minValidSources?: number
 }
 
 export class Provider {
@@ -26,7 +27,17 @@ export class Provider {
   private reportedAt = 0
 
   constructor(options: ProviderOptions) {
-    Object.assign(this, { options })
+    const mergedOptions = Object.assign(
+      {
+        adjustTvwap: { symbols: [] },
+        fallbackPriority: [],
+        minValidSources: 1,
+      },
+      options || {}
+    )
+    Object.assign(this, {
+      options: mergedOptions,
+    })
   }
 
   public async initialize(): Promise<void> {
@@ -73,7 +84,17 @@ export class Provider {
   }
 
   protected collectPrice(symbol: string): BigNumber[] {
-    return this.quoters.map((quoter) => quoter.getPrice(symbol)).filter((price) => price) as BigNumber[]
+    return this.quoters
+      .map((quoter) => quoter.getPrice(symbol))
+      .filter((price) => price && price.isFinite() && price.isGreaterThan(0)) as BigNumber[]
+  }
+
+  protected minimumSourceCount(): number {
+    const configured = Number(this.options.minValidSources || 1)
+    if (!Number.isFinite(configured) || configured < 1) {
+      return 1
+    }
+    return Math.min(this.quoters.length || 1, Math.floor(configured))
   }
 
   protected adjustPrices(): void {
@@ -101,7 +122,16 @@ export class Provider {
       if (!useTvwap) {
         const prices: BigNumber[] = this.collectPrice(symbol)
 
-        if (prices.length > 0) {
+        if (prices.length < this.minimumSourceCount()) {
+          logger.error(
+            `Skipping ${symbol}: ${prices.length} valid source(s), minimum ${this.minimumSourceCount()} required`
+          )
+        } else if (hasOutliers(prices)) {
+          logger.error(
+            `Skipping ${symbol}: source prices differ too much`,
+            prices.map((price) => price.toString())
+          )
+        } else {
           this.priceBySymbol[symbol] = average(prices)
         }
       }
