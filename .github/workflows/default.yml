@@ -71,7 +71,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build, tag, and push docker image for price-server to GHCR
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./price-server
           push: true
@@ -82,7 +82,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
     
       - name: Build, tag, and push docker image for feeder to GHCR
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./feeder
           push: true
