@@ -5,6 +5,9 @@
   "description": "DoChain Oracle Feeder",
   "scripts": {
     "test": "jest",
+    "audit:all": "npm audit --audit-level=moderate && npm --prefix feeder audit --audit-level=moderate && npm --prefix price-server audit --audit-level=moderate",
+    "typecheck:all": "npm --prefix feeder run typecheck && npm --prefix price-server run typecheck",
+    "ci:verify": "npm run audit:all && npm run typecheck:all && npm test -- --runInBand",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --fix",
     "prepare": "husky install"
   },

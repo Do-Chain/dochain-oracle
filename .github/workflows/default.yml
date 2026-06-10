@@ -28,17 +28,8 @@ jobs:
       - name: Install price-server dependencies
         run: cd price-server; npm ci --ignore-scripts
 
-      - name: Audit root dependencies
-        run: npm audit
-
-      - name: Audit feeder dependencies
-        run: cd feeder; npm audit
-
-      - name: Audit price-server dependencies
-        run: cd price-server; npm audit
-
-      - name: Run tests
-        run: npm test
+      - name: Audit, typecheck, and test
+        run: npm run ci:verify
 
   delivery:
     runs-on: ubuntu-latest

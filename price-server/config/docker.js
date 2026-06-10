@@ -6,6 +6,20 @@ const parseIntEnv = (name, fallback) => {
 const FIAT_SYMBOLS = splitEnv('FIAT_SYMBOLS')
 const CRYPTO_FALLBACK_PRIORITY = splitEnv('CRYPTO_PROVIDER_FALLBACK_PRIORITY')
 const COINGECKO_SYMBOLS = splitEnv('CRYPTO_PROVIDER_COINGECKO_SYMBOLS')
+const fixedPrices = () => {
+  if (process.env.ORACLE_ALLOW_FIXED_PRICES !== 'true') {
+    return {}
+  }
+
+  if (process.env.ORACLE_FIXED_PRICES) {
+    return JSON.parse(process.env.ORACLE_FIXED_PRICES)
+  }
+
+  return {
+    ...(process.env.DO_PRICE ? { DO: process.env.DO_PRICE } : {}),
+    ...(process.env.DODX_PRICE ? { DODx: process.env.DODX_PRICE } : {}),
+  }
+}
 
 if (COINGECKO_SYMBOLS.length && !CRYPTO_FALLBACK_PRIORITY.includes('coinGecko')) {
   CRYPTO_FALLBACK_PRIORITY.push('coinGecko')
@@ -16,10 +30,7 @@ module.exports = {
   host: process.env.HOST || '127.0.0.1',
   metricsPort: parseInt(process.env.METRICS_PORT) || 0,
   report: process.env.REPORT === 'true',
-  fixedPrices:
-    process.env.ORACLE_ALLOW_FIXED_PRICES === 'true' && process.env.DO_PRICE
-      ? { DO: process.env.DO_PRICE }
-      : {},
+  fixedPrices: fixedPrices(),
   sentry: process.env.SENTRY || '', // sentry dsn (https://sentry.io/ - error reporting service)
   slack: {
     // for incident alarm (e.g. exchange shutdown)

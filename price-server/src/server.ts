@@ -18,7 +18,7 @@ function configuredFixedPrices(): Array<{ denom: string; price: string }> {
       denom,
       price: String(fixedPrices[denom]),
     }))
-    .filter((price) => /^[A-Z0-9]+$/.test(price.denom) && /^\d+(\.\d+)?$/.test(price.price))
+    .filter((price) => /^[A-Za-z0-9]+$/.test(price.denom) && /^\d+(\.\d+)?$/.test(price.price))
 }
 
 export async function createServer(): Promise<http.Server> {
