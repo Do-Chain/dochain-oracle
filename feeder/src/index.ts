@@ -76,7 +76,7 @@ function registerCommands(parser: ArgumentParser): void {
   keyCommand.addArgument([`-t`, `--coin-type`], {
     help: `coin type used to derive the public address (https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki#path-levels)`,
     dest: `coinType`,
-    defaultValue: `330`,
+    defaultValue: `888`,
   })
 
   keyCommand.addArgument([`-k`, `--key-path`], {
