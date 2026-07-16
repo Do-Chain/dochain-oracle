@@ -78,7 +78,8 @@ You can start feeder with arguments or env.
 | `lcd-url`             | `ORACLE_FEEDER_LCD_ADDRESS`      | LCD server URL (can be multiple)                          | http://localhost:1317 |
 | `chain-id`            | `ORACLE_FEEDER_CHAIN_ID`         | Chain ID.                                                 | `dochain-1`                      |
 | `validators`          | `ORACLE_FEEDER_VALIDATORS`       | Validator to submit prices for (can be multiple)          | `dovaloper1xx...`           |
+| Unsupported           | `ORACLE_FEEDER_GAS_PRICE`        | Fee gas price for oracle voting. Keep `0`; oracle-only txs are zero-fee on Do Chain. | `0` |
 | `key-name`            | `ORACLE_FEEDER_KEY_NAME`         | name to be given to the key that will be encrypted in file| `voter`                        |
-| `coin-type`           | `ORACLE_FEEDER_COIN_TYPE`        | coin type used to derive the public address (default 330) | `330`                          |
+| `coin-type`           | `ORACLE_FEEDER_COIN_TYPE`        | coin type used to derive the public address (default 888) | `888`                          |
 | `key-path`            | `ORACLE_FEEDER_KEY_PATH`         | signing key store path (default voter.json)               | `voter.json`                   |
 | Unsupported           | `ORACLE_FEEDER_ADDR_PREFIX`      |                                                           | `do`                        |

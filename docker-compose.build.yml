@@ -21,6 +21,8 @@ services:
     environment:
       - ORACLE_FEEDER_CHAIN_ID=dochain-1
       - ORACLE_FEEDER_ADDR_PREFIX=do
+      - ORACLE_FEEDER_COIN_TYPE=888
+      - ORACLE_FEEDER_GAS_PRICE=0
       - ORACLE_FEEDER_LCD_ADDRESS=http://host.docker.internal:1317
       - ORACLE_FEEDER_VALIDATORS=dovaloper1...
       - ORACLE_FEEDER_MNEMONIC=word1 word2 word3 ...

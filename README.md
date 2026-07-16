@@ -42,3 +42,5 @@ Required variables:
 ORACLE_FEEDER_PASSWORD=<strong unique password>
 ORACLE_FEEDER_MNEMONIC=<24 word feeder mnemonic>
 ORACLE_FEEDER_VALIDATORS=dovaloper1...
+ORACLE_FEEDER_COIN_TYPE=888
+ORACLE_FEEDER_GAS_PRICE=0
