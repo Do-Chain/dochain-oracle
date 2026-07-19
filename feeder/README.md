@@ -58,7 +58,7 @@ You can start feeder with arguments or env.
    $ npm start vote -- \
       -d http://localhost:8532/latest \
       --lcd-url http://localhost:1317 \
-      --chain-id dochain-1 \
+      --chain-id Do-Chain \
       --validators dovaloper1xx \
       --validators dovaloper1yy \
       --password <password>
@@ -76,7 +76,7 @@ You can start feeder with arguments or env.
 | `password`            | `ORACLE_FEEDER_PASSWORD`         | Strong password for the encrypted feeder key              | `<strong unique password>`     |
 | `data-source-url`     | `ORACLE_FEEDER_DATA_SOURCE_URL`  | Price server URL.                                         | http://localhost:8532/latest   |
 | `lcd-url`             | `ORACLE_FEEDER_LCD_ADDRESS`      | LCD server URL (can be multiple)                          | http://localhost:1317 |
-| `chain-id`            | `ORACLE_FEEDER_CHAIN_ID`         | Chain ID.                                                 | `dochain-1`                      |
+| `chain-id`            | `ORACLE_FEEDER_CHAIN_ID`         | Chain ID.                                                 | `Do-Chain`                       |
 | `validators`          | `ORACLE_FEEDER_VALIDATORS`       | Validator to submit prices for (can be multiple)          | `dovaloper1xx...`           |
 | Unsupported           | `ORACLE_FEEDER_GAS_PRICE`        | Fee gas price for oracle voting. Keep `0`; oracle-only txs are zero-fee on Do Chain. | `0` |
 | `key-name`            | `ORACLE_FEEDER_KEY_NAME`         | name to be given to the key that will be encrypted in file| `voter`                        |

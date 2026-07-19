@@ -9,7 +9,7 @@ lcd=$(echo "$ORACLE_FEEDER_LCD_ADDRESS" | awk -F"," '{print $1}')
 feeder=$(curl -s "$lcd/do/oracle/v1beta1/validators/$ORACLE_FEEDER_VALIDATORS/feeder" | jq -r '.feeder_addr')
 
 if [ "$voter_addr" != "$feeder" ]; then
-    echo "WRONG FEEDER. REGISTER IT THROUGH: dochaind tx oracle set-feeder $voter_addr --from=<validator> --chain-id dochain-1 --fees 5000udo"
+    echo "WRONG FEEDER. REGISTER IT THROUGH: dochaind tx oracle set-feeder $voter_addr --from=<validator> --chain-id Do-Chain --fees 5000udo"
     exit 1
 fi
 

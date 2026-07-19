@@ -105,7 +105,7 @@ async function main(): Promise<void> {
       args.dataSourceUrl ||
       (process.env.ORACLE_FEEDER_DATA_SOURCE_URL && process.env.ORACLE_FEEDER_DATA_SOURCE_URL.split(',')) ||
       []
-    args.chainID = args.chainID || process.env.ORACLE_FEEDER_CHAIN_ID || 'dochain-1'
+    args.chainID = args.chainID || process.env.ORACLE_FEEDER_CHAIN_ID || 'Do-Chain'
     if (args.lcdUrl?.length === 0 || args.dataSourceUrl?.length === 0 || args.chainID === '') {
       console.error('Missing --lcd, --chain-id or --data-source-url')
       return

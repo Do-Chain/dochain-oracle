@@ -29,6 +29,7 @@ import {
   MsgAggregateDoRateVoteTypeUrl,
   aggregateVoteHash,
 } from './doOracleMsgs'
+import { aggregatePriceResponses, Price } from './priceAggregation'
 
 const ax = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
@@ -53,16 +54,8 @@ interface AccountState {
   sequence: number
 }
 
-async function initKey(
-  keyPath: string,
-  name: string,
-  password?: string,
-): Promise<ks.PlainEntity> {
-  return ks.load(
-    keyPath,
-    name,
-    password || (await promptly.password('Enter a passphrase:', { replace: '*' })),
-  )
+async function initKey(keyPath: string, name: string, password?: string): Promise<ks.PlainEntity> {
+  return ks.load(keyPath, name, password || (await promptly.password('Enter a passphrase:', { replace: '*' })))
 }
 
 function convertBech32Prefix(addr: string, prefix: string): string {
@@ -111,38 +104,26 @@ async function loadOracleParams(client: LCDClient): Promise<OracleParameters> {
   }
 }
 
-interface Price {
-  denom: string
-  price: string
-}
-
 async function getPrices(sources: string[]): Promise<Price[]> {
   try {
     const responses = await Promise.all(sources.map((s) => ax.get(s).catch(() => null)))
-    const response = responses.find((res) => res && res.data)
-
-    if (!response) {
+    const payloads: unknown[] = []
+    for (const response of responses) {
+      if (response?.data) {
+        payloads.push(response.data)
+      }
+    }
+    if (!payloads.length) {
       logger.error('getPrices: all sources failed')
       return []
     }
 
-    const { data } = response
-
-    if (
-      typeof data.created_at !== 'string' ||
-      !Array.isArray(data.prices) ||
-      !data.prices.length
-    ) {
-      logger.error('getPrices: invalid response')
+    const prices = aggregatePriceResponses(payloads, sources.length)
+    if (!prices.length) {
+      logger.error('getPrices: sources did not reach a fresh price quorum')
       return []
     }
-
-    if (Date.now() - new Date(data.created_at).getTime() > 60 * 1000) {
-      logger.error('getPrices: too old')
-      return []
-    }
-
-    return data.prices
+    return prices
   } catch (err: any) {
     logger.error('getPrices: all sources failed', err?.message || err)
     return []
@@ -171,28 +152,18 @@ function preparePrices(prices: Price[], oracleWhitelist: string[]): Price[] {
     })
     .filter(Boolean) as Price[]
 
-  oracleWhitelist.forEach((denom) => {
-    const found = newPrices.some((price) => denom === `u${price.denom.toLowerCase()}`)
-
-    if (!found) {
-      newPrices.push({
-        denom: denom.slice(1).toUpperCase(),
-        price: '0.000000',
-      })
-    }
-  })
+  const missingDenoms = oracleWhitelist.filter(
+    (denom) => !newPrices.some((price) => denom === `u${price.denom.toLowerCase()}`)
+  )
+  if (missingDenoms.length) {
+    throw new Error(`price-source quorum missing: ${missingDenoms.join(', ')}`)
+  }
 
   return newPrices.sort((a, b) => a.denom.localeCompare(b.denom))
 }
 
-function buildVoteMsgs(
-  prices: Price[],
-  valAddrs: string[],
-  voterAddr: string,
-): MsgAggregateDoRateVote[] {
-  const exchangeRates = prices
-    .map(({ denom, price }) => `${price}u${denom.toLowerCase()}`)
-    .join(',')
+function buildVoteMsgs(prices: Price[], valAddrs: string[], voterAddr: string): MsgAggregateDoRateVote[] {
+  const exchangeRates = prices.map(({ denom, price }) => `${price}u${denom.toLowerCase()}`).join(',')
 
   return valAddrs.map((valAddr) => {
     const salt = crypto.randomBytes(16).toString('hex')
@@ -219,22 +190,14 @@ export async function processVote(
   wallet: DirectSecp256k1Wallet,
   args: VoteArgs,
   valAddrs: string[],
-  voterAddr: string,
+  voterAddr: string
 ): Promise<void> {
   logger.info('[VOTE] Requesting on chain data')
 
-  const {
-    oracleVotePeriod,
-    oracleWhitelist,
-    currentVotePeriod,
-    indexInVotePeriod,
-    nextBlockHeight,
-  } = await loadOracleParams(client)
+  const { oracleVotePeriod, oracleWhitelist, currentVotePeriod, indexInVotePeriod, nextBlockHeight } =
+    await loadOracleParams(client)
 
-  if (
-    (previousVotePeriod && currentVotePeriod === previousVotePeriod) ||
-    oracleVotePeriod - indexInVotePeriod < 2
-  ) {
+  if ((previousVotePeriod && currentVotePeriod === previousVotePeriod) || oracleVotePeriod - indexInVotePeriod < 2) {
     return
   }
 
@@ -260,10 +223,7 @@ export async function processVote(
     ...prevoteMsgs.map((msg) => msg.toEncodeObject()),
   ]
   logger.info(
-    `[${isPrevoteOnlyTx ? 'PREVOTE' : 'VOTE'}] msg: ${JSON.stringify([
-      ...previousVoteMsgs,
-      ...prevoteMsgs,
-    ])}\n`,
+    `[${isPrevoteOnlyTx ? 'PREVOTE' : 'VOTE'}] msg: ${JSON.stringify([...previousVoteMsgs, ...prevoteMsgs])}\n`
   )
 
   const gasDenom = getFeeDenom(args)
@@ -279,7 +239,7 @@ export async function processVote(
     feeAmount,
     gasDenom,
     gasLimit,
-    `${packageInfo.name}@${packageInfo.version}`,
+    `${packageInfo.name}@${packageInfo.version}`
   )
 
   logger.info(`[VOTE] Broadcast success ${txhash}`)
@@ -288,7 +248,7 @@ export async function processVote(
     client,
     nextBlockHeight,
     txhash,
-    isPrevoteOnlyTx ? oracleVotePeriod * 2 : oracleVotePeriod - indexInVotePeriod,
+    isPrevoteOnlyTx ? oracleVotePeriod * 2 : oracleVotePeriod - indexInVotePeriod
   )
 
   previousVotePeriod = Math.floor(height / oracleVotePeriod)
@@ -303,7 +263,7 @@ async function signAndBroadcast(
   feeAmount: number,
   gasDenom: string,
   gasLimit: number,
-  memo: string,
+  memo: string
 ): Promise<string> {
   const lcdBase = getLCDBase(client)
   const accountState = await loadAccountState(lcdBase, voterAddr)
@@ -319,14 +279,9 @@ async function signAndBroadcast(
     [{ denom: gasDenom, amount: String(feeAmount) }],
     gasLimit,
     undefined,
-    undefined,
+    undefined
   )
-  const signDoc = makeSignDoc(
-    txBodyBytes,
-    authInfoBytes,
-    client.chainID,
-    accountState.accountNumber,
-  )
+  const signDoc = makeSignDoc(txBodyBytes, authInfoBytes, client.chainID, accountState.accountNumber)
   const { signed, signature } = await wallet.signDirect(voterAddr, signDoc)
   const txRaw = TxRaw.fromPartial({
     bodyBytes: signed.bodyBytes,
@@ -346,9 +301,7 @@ async function signAndBroadcast(
 
   const code = Number(txResponse.code || 0)
   if (code !== 0) {
-    throw new Error(
-      `[VOTE] broadcast rejected: code: ${code}, raw_log: ${txResponse.raw_log || ''}`,
-    )
+    throw new Error(`[VOTE] broadcast rejected: code: ${code}, raw_log: ${txResponse.raw_log || ''}`)
   }
 
   if (!txResponse.txhash) {
@@ -400,7 +353,7 @@ async function validateTx(
   client: LCDClient,
   nextBlockHeight: number,
   txhash: string,
-  timeoutHeight: number,
+  timeoutHeight: number
 ): Promise<number> {
   let inclusionHeight = 0
 
@@ -484,8 +437,7 @@ function getGasPrice(): number {
 
 function normalizeValidatorAddresses(args: VoteArgs, voterAddr: string): string[] {
   const valoperPrefix = getValoperPrefix(args)
-  const configuredValidators =
-    args.validators && args.validators.length ? args.validators : [voterAddr]
+  const configuredValidators = args.validators && args.validators.length ? args.validators : [voterAddr]
 
   return configuredValidators.map((addr) => convertBech32Prefix(addr, valoperPrefix))
 }
@@ -500,10 +452,7 @@ function buildLCDClient(args: VoteArgs, lcdIndex: number): LCDClient {
 export async function vote(args: VoteArgs): Promise<void> {
   const plainEntity = await initKey(args.keyPath, args.keyName, args.password)
   const accPrefix = getAccPrefix(args)
-  const wallet = await DirectSecp256k1Wallet.fromKey(
-    Buffer.from(plainEntity.privateKey, 'hex'),
-    accPrefix,
-  )
+  const wallet = await DirectSecp256k1Wallet.fromKey(Buffer.from(plainEntity.privateKey, 'hex'), accPrefix)
   const [account] = await wallet.getAccounts()
   const voterAddr = account.address
   const valAddrs = normalizeValidatorAddresses(args, voterAddr)
@@ -532,9 +481,7 @@ export async function vote(args: VoteArgs): Promise<void> {
       resetPrevote()
     })
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, Math.max(500, 500 - (Date.now() - startTime))),
-    )
+    await new Promise((resolve) => setTimeout(resolve, Math.max(500, 500 - (Date.now() - startTime))))
   }
 }
 

@@ -16,7 +16,7 @@ services:
       - ORACLE_FEEDER_PASSWORD=${ORACLE_FEEDER_PASSWORD:?set a strong feeder keystore password}
       - ORACLE_FEEDER_MNEMONIC=${ORACLE_FEEDER_MNEMONIC:?set the feeder mnemonic outside this file}
       - ORACLE_FEEDER_VALIDATORS=dovaloper1...
-      - ORACLE_FEEDER_CHAIN_ID=dochain-1
+      - ORACLE_FEEDER_CHAIN_ID=Do-Chain
       - ORACLE_FEEDER_ADDR_PREFIX=do
       - ORACLE_FEEDER_COIN_TYPE=888
       - ORACLE_FEEDER_GAS_PRICE=0
