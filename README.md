@@ -39,8 +39,14 @@ This solution has 2 components:
 Required variables:
 
 ```txt
-ORACLE_FEEDER_PASSWORD=<strong unique password>
-ORACLE_FEEDER_MNEMONIC=<24 word feeder mnemonic>
+ORACLE_IMAGE_TAG=<audited commit sha or release tag>
+ORACLE_FEEDER_PASSWORD_FILE=<path to file containing a strong unique password>
+ORACLE_FEEDER_MNEMONIC_FILE=<path to file containing the 24 word feeder mnemonic>
+ORACLE_FEEDER_DATA_SOURCE_URL=https://price-a.example/latest,https://price-b.example/latest,https://price-c.example/latest
+ORACLE_FEEDER_MIN_DATA_SOURCES=3
 ORACLE_FEEDER_VALIDATORS=dovaloper1...
 ORACLE_FEEDER_COIN_TYPE=888
 ORACLE_FEEDER_GAS_PRICE=0
+```
+
+`ORACLE_FEEDER_PASSWORD` and `ORACLE_FEEDER_MNEMONIC` are still supported for local testing, but production deployments should use the `_FILE` variables with Docker or Kubernetes secrets.

@@ -11,6 +11,18 @@ const fixedPrices = () => {
     return {}
   }
 
+  const reason = process.env.ORACLE_FIXED_PRICE_BREAKGLASS_REASON || ''
+  if (reason.trim().length < 12) {
+    throw new Error('ORACLE_FIXED_PRICE_BREAKGLASS_REASON is required when fixed prices are enabled')
+  }
+
+  const expiresAt = Date.parse(process.env.ORACLE_FIXED_PRICE_EXPIRES_AT || '')
+  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+    throw new Error('ORACLE_FIXED_PRICE_EXPIRES_AT must be a future ISO timestamp when fixed prices are enabled')
+  }
+
+  console.error(`Fixed oracle prices enabled until ${new Date(expiresAt).toISOString()}: ${reason}`)
+
   if (process.env.ORACLE_FIXED_PRICES) {
     return JSON.parse(process.env.ORACLE_FIXED_PRICES)
   }

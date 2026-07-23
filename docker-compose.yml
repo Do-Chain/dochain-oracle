@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   oracle-price-server:
-    image: dochain/oracle-price-server
+    image: ghcr.io/do-chain/oracle-price-server:${ORACLE_IMAGE_TAG:?set the audited oracle image tag}
     restart: always
     ports:
       - "8532:8532"
@@ -10,11 +10,12 @@ services:
       - dochain
 
   oracle-feeder:
-    image: dochain/oracle-feeder
+    image: ghcr.io/do-chain/oracle-feeder:${ORACLE_IMAGE_TAG:?set the audited oracle image tag}
     environment:
-      - ORACLE_FEEDER_DATA_SOURCE_URL=http://oracle-price-server:8532/latest
-      - ORACLE_FEEDER_PASSWORD=${ORACLE_FEEDER_PASSWORD:?set a strong feeder keystore password}
-      - ORACLE_FEEDER_MNEMONIC=${ORACLE_FEEDER_MNEMONIC:?set the feeder mnemonic outside this file}
+      - ORACLE_FEEDER_DATA_SOURCE_URL=${ORACLE_FEEDER_DATA_SOURCE_URL:?set comma-separated independent price endpoints}
+      - ORACLE_FEEDER_MIN_DATA_SOURCES=${ORACLE_FEEDER_MIN_DATA_SOURCES:-3}
+      - ORACLE_FEEDER_PASSWORD_FILE=/run/secrets/oracle_feeder_password
+      - ORACLE_FEEDER_MNEMONIC_FILE=/run/secrets/oracle_feeder_mnemonic
       - ORACLE_FEEDER_VALIDATORS=dovaloper1...
       - ORACLE_FEEDER_CHAIN_ID=Do-Chain
       - ORACLE_FEEDER_ADDR_PREFIX=do
@@ -22,9 +23,18 @@ services:
       - ORACLE_FEEDER_GAS_PRICE=0
       - ORACLE_FEEDER_LCD_ADDRESS=http://host.docker.internal:1317
     restart: always
+    secrets:
+      - oracle_feeder_password
+      - oracle_feeder_mnemonic
     networks:
       - dochain
 
 networks:
   dochain:
     driver: bridge
+
+secrets:
+  oracle_feeder_password:
+    file: ${ORACLE_FEEDER_PASSWORD_FILE:?set path to feeder password file}
+  oracle_feeder_mnemonic:
+    file: ${ORACLE_FEEDER_MNEMONIC_FILE:?set path to feeder mnemonic file}

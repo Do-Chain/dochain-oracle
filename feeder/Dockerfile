@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:22-alpine3.22
 
 RUN apk add --no-cache curl jq
 
@@ -20,5 +20,10 @@ COPY tsconfig.json ./
 COPY src ./src
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
+RUN addgroup -g 1000 oracle && \
+    adduser -u 1000 -G oracle -D -h /app oracle && \
+    chown -R oracle:oracle /app
+
+USER oracle
 
 ENTRYPOINT [ "./entrypoint.sh" ]

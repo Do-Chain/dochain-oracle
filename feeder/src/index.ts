@@ -3,7 +3,27 @@ import { vote } from './vote'
 import { addKey } from './addKey'
 import * as packageInfo from '../package.json'
 import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+import * as fs from 'fs'
 dotenv.config()
+
+function readSecret(name: string, fileName: string): string {
+  const value = process.env[name] || ''
+  if (value) {
+    return value
+  }
+
+  const path = process.env[fileName] || ''
+  if (!path) {
+    return ''
+  }
+
+  return fs.readFileSync(path, 'utf8').trim()
+}
+
+function parsePositiveInt(value: string | undefined, fallback: number): number {
+  const parsed = Number(value)
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback
+}
 
 function registerCommands(parser: ArgumentParser): void {
   const subparsers = parser.addSubparsers({
@@ -106,13 +126,18 @@ async function main(): Promise<void> {
       (process.env.ORACLE_FEEDER_DATA_SOURCE_URL && process.env.ORACLE_FEEDER_DATA_SOURCE_URL.split(',')) ||
       []
     args.chainID = args.chainID || process.env.ORACLE_FEEDER_CHAIN_ID || 'Do-Chain'
+    const minDataSources = parsePositiveInt(process.env.ORACLE_FEEDER_MIN_DATA_SOURCES, 1)
     if (args.lcdUrl?.length === 0 || args.dataSourceUrl?.length === 0 || args.chainID === '') {
       console.error('Missing --lcd, --chain-id or --data-source-url')
       return
     }
+    if (args.dataSourceUrl.length < minDataSources) {
+      console.error(`Need at least ${minDataSources} price data source(s)`)
+      return
+    }
 
     args.keyPath = args.keyPath || process.env.ORACLE_FEEDER_KEY_PATH || 'voter.json'
-    args.password = args.password || process.env.ORACLE_FEEDER_PASSWORD || ''
+    args.password = args.password || readSecret('ORACLE_FEEDER_PASSWORD', 'ORACLE_FEEDER_PASSWORD_FILE')
     if (args.keyPath === '' || args.password === '') {
       console.error('Missing either --key-path or --password')
       return

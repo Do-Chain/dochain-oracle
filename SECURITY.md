@@ -16,3 +16,9 @@ The maintainers should acknowledge reports within 3 business days and coordinate
 ## Supported Versions
 
 Security fixes are prioritized for the active `main` branch and any release branch currently used by DoChain operators.
+
+## Operator Secret Handling
+
+Do not pass feeder mnemonics or keystore passwords as long-lived environment variables in production. Use `ORACLE_FEEDER_PASSWORD_FILE` and `ORACLE_FEEDER_MNEMONIC_FILE` with files mounted from a secret manager.
+
+Fixed oracle prices are a breakglass mechanism. If `ORACLE_ALLOW_FIXED_PRICES=true`, operators must also set `ORACLE_FIXED_PRICE_BREAKGLASS_REASON` and a future `ORACLE_FIXED_PRICE_EXPIRES_AT` timestamp.

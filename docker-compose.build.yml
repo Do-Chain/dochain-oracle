@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   oracle-price-server:
-    image: dochain/oracle-price-server
+    image: dochain/oracle-price-server:${ORACLE_IMAGE_TAG:-local}
     platform: linux/amd64
     build:
       context: price-server
@@ -11,7 +11,7 @@ services:
         - "DoChain Oracle Price Server"
 
   oracle-feeder:
-    image: dochain/oracle-feeder
+    image: dochain/oracle-feeder:${ORACLE_IMAGE_TAG:-local}
     platform: linux/amd64
     build:
       context: feeder
@@ -24,5 +24,17 @@ services:
       - ORACLE_FEEDER_COIN_TYPE=888
       - ORACLE_FEEDER_GAS_PRICE=0
       - ORACLE_FEEDER_LCD_ADDRESS=http://host.docker.internal:1317
+      - ORACLE_FEEDER_DATA_SOURCE_URL=${ORACLE_FEEDER_DATA_SOURCE_URL:-http://oracle-price-server:8532/latest}
+      - ORACLE_FEEDER_MIN_DATA_SOURCES=${ORACLE_FEEDER_MIN_DATA_SOURCES:-1}
+      - ORACLE_FEEDER_PASSWORD_FILE=/run/secrets/oracle_feeder_password
+      - ORACLE_FEEDER_MNEMONIC_FILE=/run/secrets/oracle_feeder_mnemonic
       - ORACLE_FEEDER_VALIDATORS=dovaloper1...
-      - ORACLE_FEEDER_MNEMONIC=word1 word2 word3 ...
+    secrets:
+      - oracle_feeder_password
+      - oracle_feeder_mnemonic
+
+secrets:
+  oracle_feeder_password:
+    file: ${ORACLE_FEEDER_PASSWORD_FILE:?set path to feeder password file}
+  oracle_feeder_mnemonic:
+    file: ${ORACLE_FEEDER_MNEMONIC_FILE:?set path to feeder mnemonic file}
