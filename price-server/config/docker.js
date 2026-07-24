@@ -4,8 +4,8 @@ const parseIntEnv = (name, fallback) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
 }
 const FIAT_SYMBOLS = splitEnv('FIAT_SYMBOLS')
-const CRYPTO_FALLBACK_PRIORITY = splitEnv('CRYPTO_PROVIDER_FALLBACK_PRIORITY')
-const COINGECKO_SYMBOLS = splitEnv('CRYPTO_PROVIDER_COINGECKO_SYMBOLS')
+const CRYPTO_FALLBACK_PRIORITY = splitEnv('CRYPTO_PROVIDER_FALLBACK_PRIORITY', ['coinGecko'])
+const COINGECKO_SYMBOLS = splitEnv('CRYPTO_PROVIDER_COINGECKO_SYMBOLS', ['DO/USD'])
 const fixedPrices = () => {
   if (process.env.ORACLE_ALLOW_FIXED_PRICES !== 'true') {
     return {}
