@@ -7,6 +7,7 @@ import * as logger from 'lib/logger'
 import PricesProvider from './provider/PricesProvider'
 import { countAllRequests } from 'lib/metrics'
 import { getBaseCurrency } from 'lib/currency'
+import BigNumber from 'bignumber.js'
 
 bluebird.config({ longStackTraces: true })
 
@@ -19,6 +20,36 @@ function configuredFixedPrices(): Array<{ denom: string; price: string }> {
       price: String(fixedPrices[denom]),
     }))
     .filter((price) => /^[A-Za-z0-9]+$/.test(price.denom) && /^\d+(\.\d+)?$/.test(price.price))
+}
+
+function configuredDerivedPrices(
+  prices: Array<{ denom: string; price: string }>
+): Array<{ denom: string; price: string }> {
+  const derivedPrices = (config as any).derivedPrices || {}
+
+  return Object.keys(derivedPrices)
+    .map((denom) => {
+      const options = derivedPrices[denom] || {}
+      const source = prices.find((price) => price.denom === options.sourceDenom)
+      const sourcePrice = source && new BigNumber(source.price)
+      const multiplier = new BigNumber(String(options.multiplier || ''))
+
+      if (!sourcePrice || !sourcePrice.isFinite() || !multiplier.isFinite() || !multiplier.isGreaterThan(0)) {
+        return undefined
+      }
+
+      return {
+        denom,
+        price: sourcePrice.multipliedBy(multiplier).toFixed(18),
+      }
+    })
+    .filter((price): price is { denom: string; price: string } => {
+      if (!price) {
+        return false
+      }
+
+      return /^[A-Z0-9]+$/.test(price.denom) && /^\d+(\.\d+)?$/.test(price.price)
+    })
 }
 
 export async function createServer(): Promise<http.Server> {
@@ -55,12 +86,13 @@ export async function createServer(): Promise<http.Server> {
     ]
 
     const validPrices = prices.filter((p) => p && p.denom !== 'undefined')
+    const derivedPrices = configuredDerivedPrices(validPrices)
     const fixedPrices = configuredFixedPrices()
-    const fixedDenoms = new Set(fixedPrices.map((p) => p.denom))
+    const overrideDenoms = new Set([...derivedPrices, ...fixedPrices].map((p) => p.denom))
 
     send(res, 200, {
       created_at: new Date().toISOString(),
-      prices: [...validPrices.filter((p) => !fixedDenoms.has(p.denom)), ...fixedPrices],
+      prices: [...validPrices.filter((p) => !overrideDenoms.has(p.denom)), ...derivedPrices, ...fixedPrices],
     })
   })
 

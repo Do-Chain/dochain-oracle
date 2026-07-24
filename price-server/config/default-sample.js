@@ -28,6 +28,14 @@ module.exports = {
   port: 8532,
   metricsPort: 8533,
   fixedPrices: {},
+  // DODX is not market-priced. It follows the Do burn ratchet:
+  // DODX/USD = DO/USD * current DO-per-DODX ratchet tier.
+  derivedPrices: {
+    DODX: {
+      sourceDenom: 'DO',
+      multiplier: '3500000000',
+    },
+  },
   sentry: '', // sentry dsn (https://sentry.io/ - error reporting service)
   reporter: true,
   slack: {

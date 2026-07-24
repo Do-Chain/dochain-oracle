@@ -29,7 +29,22 @@ const fixedPrices = () => {
 
   return {
     ...(process.env.DO_PRICE ? { DO: process.env.DO_PRICE } : {}),
-    ...(process.env.DODX_PRICE ? { DODx: process.env.DODX_PRICE } : {}),
+    ...(process.env.DODX_PRICE ? { DODX: process.env.DODX_PRICE } : {}),
+  }
+}
+
+const derivedPrices = () => {
+  if (process.env.DODX_PRICE) {
+    return {}
+  }
+
+  // DODX is not market-priced. It follows the Do burn ratchet:
+  // DODX/USD = DO/USD * current DO-per-DODX ratchet tier.
+  return {
+    DODX: {
+      sourceDenom: 'DO',
+      multiplier: process.env.DODX_DO_RATIO || '3500000000',
+    },
   }
 }
 
@@ -43,6 +58,7 @@ module.exports = {
   metricsPort: parseInt(process.env.METRICS_PORT) || 0,
   report: process.env.REPORT === 'true',
   fixedPrices: fixedPrices(),
+  derivedPrices: derivedPrices(),
   sentry: process.env.SENTRY || '', // sentry dsn (https://sentry.io/ - error reporting service)
   slack: {
     // for incident alarm (e.g. exchange shutdown)
