@@ -33,6 +33,16 @@ const fixedPrices = () => {
   }
 }
 
+const fallbackPrices = () => {
+  if (process.env.ORACLE_FALLBACK_PRICES) {
+    return JSON.parse(process.env.ORACLE_FALLBACK_PRICES)
+  }
+
+  return {
+    DO: process.env.DO_FALLBACK_PRICE || '0.000000000945374284',
+  }
+}
+
 const derivedPrices = () => {
   if (process.env.DODX_PRICE) {
     return {}
@@ -58,6 +68,7 @@ module.exports = {
   metricsPort: parseInt(process.env.METRICS_PORT) || 0,
   report: process.env.REPORT === 'true',
   fixedPrices: fixedPrices(),
+  fallbackPrices: fallbackPrices(),
   derivedPrices: derivedPrices(),
   sentry: process.env.SENTRY || '', // sentry dsn (https://sentry.io/ - error reporting service)
   slack: {
@@ -73,7 +84,7 @@ module.exports = {
     },
     coinGecko: COINGECKO_SYMBOLS.length && {
       symbols: COINGECKO_SYMBOLS,
-      interval: parseIntEnv('CRYPTO_PROVIDER_COINGECKO_INTERVAL', 60 * 1000),
+      interval: parseIntEnv('CRYPTO_PROVIDER_COINGECKO_INTERVAL', 6 * 1000),
       timeout: parseIntEnv('CRYPTO_PROVIDER_COINGECKO_TIMEOUT', 10000),
     },
     upbit: process.env.CRYPTO_PROVIDER_UPBIT_SYMBOLS && {

@@ -25,6 +25,28 @@ describe('aggregatePriceResponses', () => {
     expect(aggregatePriceResponses([payload('1.25')], 1, now)).toEqual([{ denom: 'DO', price: '1.25' }])
   })
 
+  test('ignores invalid optional symbols without discarding valid oracle prices', () => {
+    expect(
+      aggregatePriceResponses(
+        [
+          {
+            created_at: '2026-07-19T11:59:45Z',
+            prices: [
+              { denom: '1INCH', price: '0.1' },
+              { denom: 'DO', price: '1.25' },
+              { denom: 'DODX', price: '4375000000' },
+            ],
+          },
+        ],
+        1,
+        now
+      )
+    ).toEqual([
+      { denom: 'DO', price: '1.25' },
+      { denom: 'DODX', price: '4375000000' },
+    ])
+  })
+
   test('rejects duplicate denoms, invalid numbers, and future timestamps', () => {
     const duplicate = payload('1')
     duplicate.prices.push({ denom: 'DO', price: '1' })

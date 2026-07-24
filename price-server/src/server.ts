@@ -22,6 +22,19 @@ function configuredFixedPrices(): Array<{ denom: string; price: string }> {
     .filter((price) => /^[A-Za-z0-9]+$/.test(price.denom) && /^\d+(\.\d+)?$/.test(price.price))
 }
 
+function configuredFallbackPrices(prices: Array<{ denom: string; price: string }>): Array<{ denom: string; price: string }> {
+  const fallbackPrices = (config as any).fallbackPrices || {}
+  const liveDenoms = new Set(prices.map((price) => price.denom))
+
+  return Object.keys(fallbackPrices)
+    .filter((denom) => !liveDenoms.has(denom))
+    .map((denom) => ({
+      denom,
+      price: String(fallbackPrices[denom]),
+    }))
+    .filter((price) => /^[A-Z0-9]+$/.test(price.denom) && /^\d+(\.\d+)?$/.test(price.price))
+}
+
 function configuredDerivedPrices(
   prices: Array<{ denom: string; price: string }>
 ): Array<{ denom: string; price: string }> {
@@ -86,13 +99,15 @@ export async function createServer(): Promise<http.Server> {
     ]
 
     const validPrices = prices.filter((p) => p && p.denom !== 'undefined')
-    const derivedPrices = configuredDerivedPrices(validPrices)
+    const fallbackPrices = configuredFallbackPrices(validPrices)
+    const pricesWithFallbacks = [...validPrices, ...fallbackPrices]
+    const derivedPrices = configuredDerivedPrices(pricesWithFallbacks)
     const fixedPrices = configuredFixedPrices()
     const overrideDenoms = new Set([...derivedPrices, ...fixedPrices].map((p) => p.denom))
 
     send(res, 200, {
       created_at: new Date().toISOString(),
-      prices: [...validPrices.filter((p) => !overrideDenoms.has(p.denom)), ...derivedPrices, ...fixedPrices],
+      prices: [...pricesWithFallbacks.filter((p) => !overrideDenoms.has(p.denom)), ...derivedPrices, ...fixedPrices],
     })
   })
 

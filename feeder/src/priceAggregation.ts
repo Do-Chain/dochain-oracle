@@ -36,20 +36,22 @@ function parsePayload(payload: unknown, now: number): Price[] | undefined {
   const prices: Price[] = []
   for (const entry of candidate.prices) {
     if (!entry || typeof entry !== 'object') {
-      return undefined
+      continue
     }
     const price = entry as { denom?: unknown; price?: unknown }
     if (
       typeof price.denom !== 'string' ||
       !DENOM_PATTERN.test(price.denom) ||
-      typeof price.price !== 'string' ||
-      seen.has(price.denom)
+      typeof price.price !== 'string'
     ) {
+      continue
+    }
+    if (seen.has(price.denom)) {
       return undefined
     }
     const amount = new BigNumber(price.price)
     if (!amount.isFinite() || !amount.isGreaterThan(0)) {
-      return undefined
+      continue
     }
     seen.add(price.denom)
     prices.push({ denom: price.denom, price: amount.toFixed() })
