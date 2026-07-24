@@ -36,14 +36,22 @@ export async function createServer(): Promise<http.Server> {
     const fiatPrices = PricesProvider.getFiatPrices()
 
     const prices = [
-      ...Object.keys(cryptoPrices).map((symbol) => ({
-        denom: getBaseCurrency(symbol),
-        price: cryptoPrices[symbol].toFixed(18),
-      })),
-      ...Object.keys(fiatPrices).map((symbol) => ({
-        denom: getBaseCurrency(symbol),
-        price: fiatPrices[symbol].toFixed(8),
-      })),
+      ...Object.keys(cryptoPrices)
+        .filter(
+          (symbol) => cryptoPrices[symbol] && typeof cryptoPrices[symbol].toFixed === 'function'
+        )
+        .map((symbol) => ({
+          denom: getBaseCurrency(symbol),
+          price: cryptoPrices[symbol].toFixed(18),
+        })),
+      ...Object.keys(fiatPrices)
+        .filter(
+          (symbol) => fiatPrices[symbol] && typeof fiatPrices[symbol].toFixed === 'function'
+        )
+        .map((symbol) => ({
+          denom: getBaseCurrency(symbol),
+          price: fiatPrices[symbol].toFixed(8),
+        })),
     ]
 
     const validPrices = prices.filter((p) => p && p.denom !== 'undefined')

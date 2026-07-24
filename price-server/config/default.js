@@ -46,7 +46,7 @@ module.exports = {
       'coinGecko', // required for USDT/USDC to USD quotes.
     ],
     coinGecko: {
-      interval: 6 * 1000,
+      interval: 60 * 1000,
       symbols: [
         'DO/USD',
         'BTC/USD',

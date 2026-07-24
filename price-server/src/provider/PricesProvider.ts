@@ -73,7 +73,7 @@ export default class PricesProvider {
             `Skipping symbol ${key} due to outliers`,
             prices.map((p) => p.toString())
           )
-          return {}
+          return []
         } else {
           // ... return a unique object with the average
           return { [key]: average(prices) }
@@ -84,6 +84,10 @@ export default class PricesProvider {
       .reduce((memo, crypto) => {
         const key = Object.keys(crypto)[0]
         const value = crypto[key]
+
+        if (!key || !value) {
+          return memo
+        }
 
         return { ...memo, [key]: value }
       }, {})
