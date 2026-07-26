@@ -21,7 +21,7 @@ describe('aggregatePriceResponses', () => {
     expect(aggregatePriceResponses([payload('1'), payload('1', '2026-07-19T11:00:00Z')], 3, now)).toEqual([])
   })
 
-  test('supports a deliberately configured single local source', () => {
+  test('supports single source only after startup explicitly allows it', () => {
     expect(aggregatePriceResponses([payload('1.25')], 1, now)).toEqual([{ denom: 'DO', price: '1.25' }])
   })
 

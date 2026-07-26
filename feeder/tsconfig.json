@@ -17,5 +17,8 @@
     "baseUrl": "src",
     "sourceRoot": "src",
     "resolveJsonModule": true
-  }
+  },
+  "exclude": [
+    "**/*.spec.ts"
+  ]
 }

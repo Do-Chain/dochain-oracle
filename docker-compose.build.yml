@@ -24,8 +24,8 @@ services:
       - ORACLE_FEEDER_COIN_TYPE=888
       - ORACLE_FEEDER_GAS_PRICE=0
       - ORACLE_FEEDER_LCD_ADDRESS=http://host.docker.internal:1317
-      - ORACLE_FEEDER_DATA_SOURCE_URL=${ORACLE_FEEDER_DATA_SOURCE_URL:-http://oracle-price-server:8532/latest}
-      - ORACLE_FEEDER_MIN_DATA_SOURCES=${ORACLE_FEEDER_MIN_DATA_SOURCES:-1}
+      - ORACLE_FEEDER_DATA_SOURCE_URL=${ORACLE_FEEDER_DATA_SOURCE_URL:?set comma-separated independent price endpoints}
+      - ORACLE_FEEDER_MIN_DATA_SOURCES=${ORACLE_FEEDER_MIN_DATA_SOURCES:-3}
       - ORACLE_FEEDER_PASSWORD_FILE=/run/secrets/oracle_feeder_password
       - ORACLE_FEEDER_MNEMONIC_FILE=/run/secrets/oracle_feeder_mnemonic
       - ORACLE_FEEDER_VALIDATORS=dovaloper1...

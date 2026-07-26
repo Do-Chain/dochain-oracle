@@ -25,6 +25,13 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback
 }
 
+function requiredDataSources(): number {
+  if (process.env.ORACLE_ALLOW_SINGLE_SOURCE === 'true') {
+    return 1
+  }
+  return parsePositiveInt(process.env.ORACLE_FEEDER_MIN_DATA_SOURCES, 3)
+}
+
 function registerCommands(parser: ArgumentParser): void {
   const subparsers = parser.addSubparsers({
     title: `commands`,
@@ -126,13 +133,13 @@ async function main(): Promise<void> {
       (process.env.ORACLE_FEEDER_DATA_SOURCE_URL && process.env.ORACLE_FEEDER_DATA_SOURCE_URL.split(',')) ||
       []
     args.chainID = args.chainID || process.env.ORACLE_FEEDER_CHAIN_ID || 'Do-Chain'
-    const minDataSources = parsePositiveInt(process.env.ORACLE_FEEDER_MIN_DATA_SOURCES, 1)
+    const minDataSources = requiredDataSources()
     if (args.lcdUrl?.length === 0 || args.dataSourceUrl?.length === 0 || args.chainID === '') {
       console.error('Missing --lcd, --chain-id or --data-source-url')
       return
     }
     if (args.dataSourceUrl.length < minDataSources) {
-      console.error(`Need at least ${minDataSources} price data source(s)`)
+      console.error(`Need at least ${minDataSources} price data source(s); set ORACLE_ALLOW_SINGLE_SOURCE=true only for explicit breakglass/local operation`)
       return
     }
 

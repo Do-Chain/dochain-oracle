@@ -76,8 +76,9 @@ You can start feeder with arguments or env.
 | `password`            | `ORACLE_FEEDER_PASSWORD`         | Strong password for the encrypted feeder key              | `<strong unique password>`     |
 | Unsupported           | `ORACLE_FEEDER_PASSWORD_FILE`    | File containing the encrypted feeder key password         | `/run/secrets/oracle_feeder_password` |
 | Unsupported           | `ORACLE_FEEDER_MNEMONIC_FILE`    | File containing the feeder mnemonic for `add-key`         | `/run/secrets/oracle_feeder_mnemonic` |
-| `data-source-url`     | `ORACLE_FEEDER_DATA_SOURCE_URL`  | Price server URL.                                         | http://localhost:8532/latest   |
+| `data-source-url`     | `ORACLE_FEEDER_DATA_SOURCE_URL`  | Price server URLs. Use comma-separated independent endpoints in production. | http://price-a:8532/latest,http://price-b:8532/latest,http://price-c:8532/latest |
 | Unsupported           | `ORACLE_FEEDER_MIN_DATA_SOURCES` | Minimum configured price endpoints required at startup    | `3` |
+| Unsupported           | `ORACLE_ALLOW_SINGLE_SOURCE`     | Emergency/local-only opt-in for a single configured price endpoint | `false` |
 | `lcd-url`             | `ORACLE_FEEDER_LCD_ADDRESS`      | LCD server URL (can be multiple)                          | http://localhost:1317 |
 | `chain-id`            | `ORACLE_FEEDER_CHAIN_ID`         | Chain ID.                                                 | `Do-Chain`                       |
 | `validators`          | `ORACLE_FEEDER_VALIDATORS`       | Validator to submit prices for (can be multiple)          | `dovaloper1xx...`           |
