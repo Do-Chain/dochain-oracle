@@ -11,17 +11,7 @@ const fixedPrices = () => {
     return {}
   }
 
-  const reason = process.env.ORACLE_FIXED_PRICE_BREAKGLASS_REASON || ''
-  if (reason.trim().length < 12) {
-    throw new Error('ORACLE_FIXED_PRICE_BREAKGLASS_REASON is required when fixed prices are enabled')
-  }
-
-  const expiresAt = Date.parse(process.env.ORACLE_FIXED_PRICE_EXPIRES_AT || '')
-  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
-    throw new Error('ORACLE_FIXED_PRICE_EXPIRES_AT must be a future ISO timestamp when fixed prices are enabled')
-  }
-
-  console.error(`Fixed oracle prices enabled until ${new Date(expiresAt).toISOString()}: ${reason}`)
+  logBreakglass('fixed', 'ORACLE_FIXED_PRICE')
 
   if (process.env.ORACLE_FIXED_PRICES) {
     return JSON.parse(process.env.ORACLE_FIXED_PRICES)
@@ -34,13 +24,33 @@ const fixedPrices = () => {
 }
 
 const fallbackPrices = () => {
+  if (process.env.ORACLE_ALLOW_FALLBACK_PRICES !== 'true') {
+    return {}
+  }
+
+  logBreakglass('fallback', 'ORACLE_FALLBACK_PRICE')
+
   if (process.env.ORACLE_FALLBACK_PRICES) {
     return JSON.parse(process.env.ORACLE_FALLBACK_PRICES)
   }
 
   return {
-    DO: process.env.DO_FALLBACK_PRICE || '0.000000000945374284',
+    ...(process.env.DO_FALLBACK_PRICE ? { DO: process.env.DO_FALLBACK_PRICE } : {}),
   }
+}
+
+const logBreakglass = (mode, prefix) => {
+  const reason = process.env[`${prefix}_BREAKGLASS_REASON`] || ''
+  if (reason.trim().length < 12) {
+    throw new Error(`${prefix}_BREAKGLASS_REASON is required when ${mode} prices are enabled`)
+  }
+
+  const expiresAt = Date.parse(process.env[`${prefix}_EXPIRES_AT`] || '')
+  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+    throw new Error(`${prefix}_EXPIRES_AT must be a future ISO timestamp when ${mode} prices are enabled`)
+  }
+
+  console.error(`${mode} oracle prices enabled until ${new Date(expiresAt).toISOString()}: ${reason}`)
 }
 
 const derivedPrices = () => {
