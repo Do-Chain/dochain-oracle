@@ -13,7 +13,7 @@
     "@opentelemetry/sdk-metrics": "^2.7.1",
     "@polka/send-type": "^0.5.2",
     "@sentry/node": "^7.30.0",
-    "bignumber.js": "^9.0.1",
+    "bignumber.js": "^11.1.2",
     "bluebird": "^3.7.2",
     "config": "^3.3.3",
     "csv-writer": "^1.6.0",
